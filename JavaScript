@@ -1,0 +1,111 @@
+// ======================================================
+// Maria Billig Beauty — interações do site
+// ======================================================
+
+const WHATSAPP_NUMBER = "5548984640096"; // (48) 98464-0096
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // ---- Ano no rodapé ----
+  const yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // ---- Header com sombra ao rolar ----
+  const header = document.getElementById("siteHeader");
+  const onScroll = () => {
+    if (window.scrollY > 12) header.classList.add("scrolled");
+    else header.classList.remove("scrolled");
+  };
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // ---- Menu mobile ----
+  const navToggle = document.getElementById("navToggle");
+  const navLinks = document.getElementById("navLinks");
+  navToggle.addEventListener("click", () => {
+    navLinks.classList.toggle("mobile-open");
+  });
+  navLinks.querySelectorAll("a").forEach(a => {
+    a.addEventListener("click", () => navLinks.classList.remove("mobile-open"));
+  });
+
+  // ---- Reveal on scroll (com fallback caso IntersectionObserver não exista) ----
+  const revealEls = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    revealEls.forEach(el => el.classList.add("pending"));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  // ---- FAQ accordion ----
+  document.querySelectorAll(".faq-item").forEach(item => {
+    const q = item.querySelector(".faq-q");
+    const a = item.querySelector(".faq-a");
+    q.addEventListener("click", () => {
+      const isOpen = item.classList.contains("open");
+      // fecha os outros
+      document.querySelectorAll(".faq-item.open").forEach(other => {
+        if (other !== item) {
+          other.classList.remove("open");
+          other.querySelector(".faq-a").style.maxHeight = null;
+        }
+      });
+      if (isOpen) {
+        item.classList.remove("open");
+        a.style.maxHeight = null;
+      } else {
+        item.classList.add("open");
+        a.style.maxHeight = a.scrollHeight + "px";
+      }
+    });
+  });
+
+  // ---- Links diretos de WhatsApp (flutuante + card de agendamento) ----
+  const defaultMsg = "Olá, Maria! Vim pelo site e gostaria de agendar um horário. 😊";
+  const waLinkDefault = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(defaultMsg)}`;
+
+  const whatsFloat = document.getElementById("whatsFloat");
+  const whatsDirect = document.getElementById("whatsDirect");
+  if (whatsFloat) whatsFloat.href = waLinkDefault;
+  if (whatsDirect) whatsDirect.href = waLinkDefault;
+
+  // ---- Formulário de agendamento -> WhatsApp ----
+  const form = document.getElementById("bookingForm");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const nome = form.nome.value.trim();
+      const servico = form.servico.value;
+      const data = form.data.value;
+      const periodo = form.periodo.value;
+      const mensagem = form.mensagem.value.trim();
+
+      let texto = `Olá, Maria! Meu nome é ${nome}.`;
+      texto += `\nGostaria de agendar: *${servico}*.`;
+
+      if (data) {
+        const [ano, mes, dia] = data.split("-");
+        texto += `\nData preferida: ${dia}/${mes}/${ano}`;
+        if (periodo) texto += ` (período: ${periodo})`;
+      } else if (periodo) {
+        texto += `\nPeríodo preferido: ${periodo}`;
+      }
+
+      if (mensagem) texto += `\nObservação: ${mensagem}`;
+
+      texto += `\n\nVim pelo site 💛`;
+
+      const link = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`;
+      window.open(link, "_blank", "noopener");
+    });
+  }
+
+});
